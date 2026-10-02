@@ -16,7 +16,8 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const clone = o => JSON.parse(JSON.stringify(o));
 const chunk = (arr, n) => { const out = []; for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; };
 const MM = 96 / 25.4;                      // CSS px per mm
-const UNIT_PX = { px: 1, pt: 96 / 72, mm: MM };
+// Figma's A4 frame is 595 × 842, i.e. 1 Figma px = 1 pt
+const UNIT_PX = { fpx: 96 / 72, pt: 96 / 72, mm: MM, px: 1 };
 const PAPERS = { A4: [210, 297], Letter: [215.9, 279.4], Legal: [215.9, 355.6] };
 const MONTHS = {
   bn: ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'],
@@ -27,8 +28,99 @@ const PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120"><rect width="100" height="120" fill="#dfe3ea"/><circle cx="50" cy="46" r="20" fill="#b4bccb"/><path d="M10 120c4-27 21-40 40-40s36 13 40 40z" fill="#b4bccb"/></svg>');
 const DEFAULT_LOGO = 'assets/logo.png';
 
+/* ---------- font catalogue ----------
+   g = Google Fonts, m = fonts.maateen.me (Bangla web-font CDN), style = decorative */
+const FONTS = [
+  // বাংলা – সাধারণ
+  { n: 'Hind Siliguri',      lang: 'bn', src: 'g', w: '400;500;600;700' },
+  { n: 'Noto Sans Bengali',  lang: 'bn', src: 'g', w: '400;600;700' },
+  { n: 'Noto Serif Bengali', lang: 'bn', src: 'g', w: '400;600;700' },
+  { n: 'Tiro Bangla',        lang: 'bn', src: 'g' },
+  { n: 'Baloo Da 2',         lang: 'bn', src: 'g', w: '400;600;700' },
+  { n: 'Anek Bangla',        lang: 'bn', src: 'g', w: '400;600;700' },
+  { n: 'Mina',               lang: 'bn', src: 'g', w: '400;700' },
+  { n: 'SolaimanLipi',       lang: 'bn', src: 'm', slug: 'solaiman-lipi' },
+  { n: 'Kalpurush',          lang: 'bn', src: 'm', slug: 'kalpurush' },
+  { n: 'Siyam Rupali',       lang: 'bn', src: 'm', slug: 'siyam-rupali', fam: ['Siyam Rupali', 'SiyamRupali'] },
+  { n: 'Nikosh',             lang: 'bn', src: 'm', slug: 'nikosh' },
+  { n: 'Mukti',              lang: 'bn', src: 'm', slug: 'mukti' },
+  { n: 'Adorsho Lipi',       lang: 'bn', src: 'm', slug: 'adorsho-lipi', fam: ['AdorshoLipi', 'Adorsho Lipi'] },
+  // বাংলা – স্টাইলিশ
+  { n: 'Galada',             lang: 'bn', src: 'g', style: 1 },
+  { n: 'Atma',               lang: 'bn', src: 'g', w: '400;600;700', style: 1 },
+  { n: 'Charu Chandan Hard Stroke', lang: 'bn', src: 'm', slug: 'charu-chandan-hard-stroke', style: 1 },
+  { n: 'Charu Chandan 3D',   lang: 'bn', src: 'm', slug: 'charu-chandan-3d', style: 1 },
+  { n: 'BenSen Handwriting', lang: 'bn', src: 'm', slug: 'bensen-handwriting', fam: ['BenSen Handwriting', 'BenSenHandwriting'], style: 1 },
+  // English – regular
+  { n: 'Poppins',            lang: 'en', src: 'g', w: '400;500;600;700' },
+  { n: 'Roboto',             lang: 'en', src: 'g', w: '400;500;700' },
+  { n: 'Open Sans',          lang: 'en', src: 'g', w: '400;600;700' },
+  { n: 'Lato',               lang: 'en', src: 'g', w: '400;700' },
+  { n: 'Montserrat',         lang: 'en', src: 'g', w: '400;600;700' },
+  { n: 'Inter',              lang: 'en', src: 'g', w: '400;600;700' },
+  { n: 'Nunito',             lang: 'en', src: 'g', w: '400;600;700' },
+  { n: 'Raleway',            lang: 'en', src: 'g', w: '400;600;700' },
+  { n: 'Oswald',             lang: 'en', src: 'g', w: '400;500;600;700' },
+  { n: 'Merriweather',       lang: 'en', src: 'g', w: '400;700' },
+  { n: 'Roboto Slab',        lang: 'en', src: 'g', w: '400;600;700' },
+  { n: 'Playfair Display',   lang: 'en', src: 'g', w: '400;600;700' },
+  // English – stylish (good for institution names)
+  { n: 'Cinzel',             lang: 'en', src: 'g', w: '400;600;700', style: 1 },
+  { n: 'Cinzel Decorative',  lang: 'en', src: 'g', w: '400;700', style: 1 },
+  { n: 'Cormorant Garamond', lang: 'en', src: 'g', w: '500;600;700', style: 1 },
+  { n: 'Marcellus',          lang: 'en', src: 'g', style: 1 },
+  { n: 'Abril Fatface',      lang: 'en', src: 'g', style: 1 },
+  { n: 'Alfa Slab One',      lang: 'en', src: 'g', style: 1 },
+  { n: 'Bebas Neue',         lang: 'en', src: 'g', style: 1 },
+  { n: 'Righteous',          lang: 'en', src: 'g', style: 1 },
+  { n: 'Lobster',            lang: 'en', src: 'g', style: 1 },
+  { n: 'Dancing Script',     lang: 'en', src: 'g', w: '400;600;700', style: 1 },
+  { n: 'Great Vibes',        lang: 'en', src: 'g', style: 1 },
+  { n: 'UnifrakturMaguntia', lang: 'en', src: 'g', style: 1 }
+];
+const loadedFonts = new Set();
+function fontEntry(name) {
+  return FONTS.find(f => f.n === name) || (A.fonts || []).find(f => f.n === name) || null;
+}
+function famCSS(name) {
+  const f = fontEntry(name);
+  const list = f?.fam || [f?.n || name || 'Hind Siliguri'];
+  return list.map(x => `'${String(x).replace(/'/g, '')}'`).join(',');
+}
+function ensureFont(name) {
+  if (!name || loadedFonts.has(name)) return;
+  const f = FONTS.find(x => x.n === name);
+  if (!f) return;                       // uploaded fonts are registered separately
+  loadedFonts.add(name);
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = f.src === 'm'
+    ? `https://fonts.maateen.me/${f.slug}/font.css`
+    : `https://fonts.googleapis.com/css2?family=${encodeURIComponent(f.n).replace(/%20/g, '+')}${f.w ? ':wght@' + f.w : ''}&display=swap`;
+  link.onload = () => {
+    const fam = (f.fam || [f.n])[0];
+    const probe = f.lang === 'bn' ? 'অআকখশিক্ষা' : 'AaBb';
+    Promise.all([400, 700].map(wt => document.fonts.load(`${wt} 20px '${fam}'`, probe).catch(() => {})))
+      .then(() => { schedulePreview(); updateFontSamples(); });
+  };
+  document.head.appendChild(link);
+}
+function ensureCardFonts() {
+  const D = S.design;
+  [D.fontBn, D.fontEn, D.collegeFontBn, D.collegeFontEn].forEach(ensureFont);
+}
+async function registerUploadedFont(f) {
+  try {
+    const face = new FontFace(f.n, `url(${f.data})`);
+    await face.load();
+    document.fonts.add(face);
+    return true;
+  } catch (e) { return false; }
+}
+
 /* ---------- defaults ---------- */
 const DEFAULT_SETTINGS = {
+  v: 2,
   lang: 'bn',
   college: { bn: 'শিরযুগ আজিমুন্নেছা গার্লস স্কুল এন্ড কলেজ', en: 'Shirjug Azimunnesa Girls School & College' },
   address: { bn: 'শেখেরহাট, ঝালকাঠি', en: 'Shekherhat, Jhalokathi' },
@@ -52,12 +144,14 @@ const DEFAULT_SETTINGS = {
   design: {
     primary: '#1565c0', cardBg: '#fffdf7', cc: '#141414', text: '#1a1a1a', fieldBgColor: '#e9e9ee',
     borderColor: '#8b1c1c', borderWidth: 2.5, radius: 2,
-    font: 'Hind Siliguri', collegeSize: 6.6, fieldSize: 5.6,
-    bgDeco: true, watermark: false, showTitle: true, showBar: true, fieldBg: true
+    fontBn: 'Hind Siliguri', fontEn: 'Poppins', collegeFontBn: 'Hind Siliguri', collegeFontEn: 'Poppins',
+    collegeSize: 8.4, fieldSize: 7, collegeCurve: 0, collegeEffect: 'none', collegeStroke: '#ffffff',
+    headTop: 0, titleColor: '#ffffff', barColor: '#ffffff',
+    bgDeco: true, watermark: false, showTitle: true, titlePill: true, showBar: true, barBg: true, fieldBg: true
   },
   photo: { shape: 'rect', frame: 'solid', color: '#6b2fa0', width: 2 },
-  card: { w: 146, h: 237, unit: 'px' },
-  print: { paper: 'A4', perPage: 9, gap: 4, margin: 8, cutMarks: true, vcenter: false, which: 'all' }
+  card: { w: 146, h: 237, unit: 'fpx' },
+  print: { paper: 'A4', perPage: 9, gap: 5, margin: 8, cutMarks: true, vcenter: true, which: 'all' }
 };
 
 const STUDENT_FORM = [
@@ -67,8 +161,7 @@ const STUDENT_FORM = [
   { key: 'class',   label: 'শ্রেণী' },
   { key: 'group',   label: 'বিভাগ' },
   { key: 'roll',    label: 'রোল নং', mode: 'numeric' },
-  { key: 'session', label: 'শিক্ষাবর্ষ' },
-  { key: 'id',      label: 'আইডি নং (ছবির কোণে, ঐচ্ছিক)', full: true }
+  { key: 'session', label: 'শিক্ষাবর্ষ', full: true }
 ];
 
 const ALIASES = {
@@ -78,21 +171,20 @@ const ALIASES = {
   class:   ['class', 'classname', 'class_name', 'শ্রেণী', 'শ্রেণি'],
   group:   ['group', 'department', 'dept', 'section', 'বিভাগ', 'শাখা'],
   roll:    ['roll', 'rollno', 'roll_no', 'roll no', 'roll no.', 'রোল', 'রোল নং', 'রোল নম্বর'],
-  session: ['session', 'year', 'academic_year', 'শিক্ষাবর্ষ', 'সেশন'],
-  id:      ['id', 'idno', 'id_no', 'studentid', 'student_id', 'আইডি', 'আইডি নং']
+  session: ['session', 'year', 'academic_year', 'শিক্ষাবর্ষ', 'সেশন']
 };
 
 const DEMO = {
-  bn: { name: 'সাদিয়া ইসলাম', father: 'মোঃ রফিকুল ইসলাম', mother: 'মোসাঃ রাশিদা বেগম', group: 'মানবিক', roll: '220', id: '59313' },
-  en: { name: 'Sadia Islam', father: 'Md. Rafiqul Islam', mother: 'Mst. Rashida Begum', class: 'XII', group: 'Humanities', roll: '220', session: '2025-2026', id: '59313' }
+  bn: { name: 'সাদিয়া ইসলাম', father: 'মোঃ রফিকুল ইসলাম', mother: 'মোসাঃ রাশিদা বেগম', group: 'মানবিক', roll: '220' },
+  en: { name: 'Sadia Islam', father: 'Md. Rafiqul Islam', mother: 'Mst. Rashida Begum', class: 'XII', group: 'Humanities', roll: '220', session: '2025-2026' }
 };
 
 /* ---------- state ---------- */
 let S = clone(DEFAULT_SETTINGS);
-let A = { logo: null, signature: null, background: null };
+let A = { logo: null, signature: null, background: null, fonts: [] };
 let STU = [];
 let cur = null;
-const ui = { pmode: 'card', zoom: null, search: '', tab: 'students' };
+const ui = { pmode: 'card', zoom: null, szoom: null, search: '', tab: 'students' };
 
 /* ---------- storage (IndexedDB, falls back to localStorage) ---------- */
 const Store = {
@@ -173,6 +265,16 @@ function mergeSettings(saved) {
   const savedFields = Array.isArray(saved?.fields) ? saved.fields : [];
   s.fields = DEFAULT_SETTINGS.fields.map(df => ({ ...df, ...(savedFields.find(f => f.key === df.key) || {}) }));
   if (savedFields.length) s.fields.sort((a, b) => savedFields.findIndex(f => f.key === a.key) - savedFields.findIndex(f => f.key === b.key));
+  // v1 → v2: card was laid out at a smaller scale and used screen px
+  if (saved && (saved.v || 1) < 2) {
+    const d = DEFAULT_SETTINGS;
+    if (saved.card?.unit === 'px' && +saved.card.w === 146) s.card.unit = 'fpx';
+    s.design.collegeSize = d.design.collegeSize;
+    s.design.fieldSize = d.design.fieldSize;
+    if (saved.design?.font) s.design.fontBn = s.design.collegeFontBn = saved.design.font;
+    s.print.gap = d.print.gap; s.print.vcenter = true;
+    s.v = 2;
+  }
   return s;
 }
 
@@ -235,44 +337,65 @@ function cardPx() {
 function demoStudent() { return { ...DEMO[S.lang], photo: '' }; }
 
 /* ---------- card renderer ---------- */
+let svgSeq = 0;
+function collegeHTML(L) {
+  const D = S.design, txt = esc(S.college[L]);
+  const curve = +D.collegeCurve || 0, fx = `fx-${D.collegeEffect || 'none'}`;
+  if (!curve) return `<div class="c-college ${fx}" data-fit><span class="fit">${txt}</span></div>`;
+  // curved name: SVG text on a circular arc (keeps Bangla conjuncts intact)
+  const id = 'cp' + (++svgSeq).toString(36) + Math.random().toString(36).slice(2, 6);
+  const fs = +D.collegeSize || 8.4, W = 138, pad = 3, chord = W - 2 * pad, s = Math.abs(curve);
+  const r = (chord * chord / 4 + s * s) / (2 * s);
+  const up = curve > 0;
+  const base = up ? s + fs * 1.25 : fs * 1.25;
+  const H = up ? base + fs * 0.45 : base + s + fs * 0.45;
+  const d = `M ${pad} ${base} A ${r.toFixed(2)} ${r.toFixed(2)} 0 0 ${up ? 1 : 0} ${W - pad} ${base}`;
+  return `<svg class="c-college-svg ${fx}" viewBox="0 0 ${W} ${H.toFixed(2)}" style="width:calc(var(--u) * ${W});height:calc(var(--u) * ${H.toFixed(2)})">
+    <defs><path id="${id}" d="${d}"/></defs>
+    <text font-size="${fs}" text-anchor="middle"><textPath href="#${id}" startOffset="50%" data-fit-svg="${id}" data-arc="${W},${pad},${s},${up ? 1 : 0},${base}">${txt}</textPath></text>
+  </svg>`;
+}
+
 function renderCard(st, scale = 1) {
   const L = S.lang, D = S.design, P = S.photo;
   const { w, h } = cardPx();
   const k = (w / 146) * scale;
   const colon = ':';
   const logo = A.logo || DEFAULT_LOGO;
+  const bodyFont = L === 'bn' ? `${famCSS(D.fontBn)},${famCSS(D.fontEn)}` : `${famCSS(D.fontEn)},${famCSS(D.fontBn)}`;
+  const colFont = L === 'bn' ? `${famCSS(D.collegeFontBn)},${famCSS(D.fontBn)}` : `${famCSS(D.collegeFontEn)},${famCSS(D.collegeFontBn)}`;
 
   const vars = [
     `--k:${k}`, `width:${w * scale}px`, `height:${h * scale}px`,
-    `--primary:${D.primary}`, `--text:${D.text}`, `--cc:${D.cc}`,
+    `--primary:${D.primary}`, `--text:${D.text}`, `--cc:${D.cc}`, `--stc:${D.collegeStroke}`,
     `--fbg:${D.fieldBg ? D.fieldBgColor : 'transparent'}`,
     `--bc:${D.borderColor}`, `--bw:${+D.borderWidth || 0}`, `--br:${+D.radius || 0}`,
     `--fw:${P.frame === 'none' ? 0 : (+P.width || 0)}`, `--fc:${P.color}`,
-    `--cs:${+D.collegeSize || 6.6}`, `--fs:${+D.fieldSize || 5.6}`,
-    `--cfont:'${D.font}','Hind Siliguri',sans-serif`,
+    `--cs:${+D.collegeSize || 8.4}`, `--tc:${D.titleColor}`, `--barc:${D.barColor}`, `--fs:${+D.fieldSize || 7}`, `--ht:${+D.headTop || 0}`,
+    `--cfont:${bodyFont},'Hind Siliguri',sans-serif`,
+    `--colfont:${colFont},'Hind Siliguri',sans-serif`,
     `background-color:${D.cardBg}`,
-    A.background ? `background-image:url("${A.background}")` : ''
+    // single quotes: this string sits inside style="…"
+    A.background ? `background-image:url('${A.background}')` : ''
   ].join(';');
 
   const rows = S.fields.filter(f => f.show).map(f =>
-    `<div class="c-row"><span class="c-lab" data-fit>${esc(f[L])}</span><span class="c-colon">${colon}</span><span class="c-val" data-fit>${esc(num(fieldValue(st, f.key), L)) || '&nbsp;'}</span></div>`
+    `<div class="c-row"><span class="c-lab" data-fit><span class="fit">${esc(f[L])}</span></span><span class="c-colon">${colon}</span><span class="c-val" data-fit><span class="fit">${esc(num(fieldValue(st, f.key), L)) || '&nbsp;'}</span></span></div>`
   ).join('');
 
-  const photoSrc = st?.photo || PLACEHOLDER;
   const photo = `<div class="c-photo-wrap shp-${P.shape} fr-${P.frame}">
-      <div class="c-photo"><div class="c-photo-in"><img src="${photoSrc}" alt=""></div></div>
-      ${st?.id ? `<span class="c-idno">${esc(num(st.id, L))}</span>` : ''}
+      <div class="c-photo"><div class="c-photo-in"><img src="${st?.photo || PLACEHOLDER}" alt=""></div></div>
     </div>`;
 
   const mobileText = S.mobile ? `${esc(S.mobileLabel[L])}${colon} ${esc(num(S.mobile, L))}` : '&nbsp;';
 
-  return `<div class="idcard lang-${L}" style="${vars}">
+  return `<div class="idcard lang-${L}" data-fs="${+D.fieldSize || 7}" style="${vars}">
     ${D.bgDeco ? '<div class="c-deco c-deco-top"></div><div class="c-deco c-deco-bot"></div>' : ''}
     ${D.watermark ? `<img class="c-water" src="${logo}" alt="" onerror="this.remove()">` : ''}
     <div class="c-head">
-      ${D.showTitle ? `<div class="c-title">${esc(S.title[L])}</div>` : ''}
-      <div class="c-college" data-fit>${esc(S.college[L])}</div>
-      <div class="c-address" data-fit>${esc(S.address[L])}</div>
+      ${D.showTitle ? `<div class="c-title ${D.titlePill ? '' : 'nopill'}">${esc(S.title[L])}</div>` : ''}
+      ${collegeHTML(L)}
+      <div class="c-address" data-fit><span class="fit">${esc(S.address[L])}</span></div>
     </div>
     <div class="c-mid">
       <div class="c-logo"><img src="${logo}" alt="" onerror="this.remove()"></div>
@@ -280,24 +403,67 @@ function renderCard(st, scale = 1) {
     </div>
     <div class="c-fields">${rows}</div>
     <div class="c-foot">
-      <div class="c-valid" data-fit>${esc(S.validLabel[L])} ${colon} ${esc(fmtDate(S.validDate, L))}</div>
-      <div class="c-sign">${A.signature ? `<img src="${A.signature}" alt="">` : '<div class="c-sign-space"></div>'}<span data-fit>${esc(S.principal[L])}</span></div>
+      <div class="c-valid" data-fit><span class="fit">${esc(S.validLabel[L])} ${colon} ${esc(fmtDate(S.validDate, L))}</span></div>
+      <div class="c-sign">${A.signature ? `<img src="${A.signature}" alt="">` : '<div class="c-sign-space"></div>'}<span data-fit><span class="fit">${esc(S.principal[L])}</span></span></div>
     </div>
-    ${D.showBar ? `<div class="c-bar">${mobileText}</div>` : ''}
+    ${D.showBar ? `<div class="c-bar ${D.barBg ? '' : 'nobg'}">${mobileText}</div>` : ''}
   </div>`;
 }
 
-/* shrink text that overflows its box */
+/* Long text is squeezed sideways (scaleX) so the font size stays the same
+   across every label. Only if it would need more than 40% squeeze does the
+   font get a little smaller as well. */
+const MIN_SQUEEZE = 0.6;
 function autoFit(root) {
-  $$('[data-fit]', root).forEach(el => {
-    el.style.fontSize = '';
-    if (el.scrollWidth <= el.clientWidth + 0.5) return;
-    let fs = parseFloat(getComputedStyle(el).fontSize);
-    const min = fs * 0.5;
-    let i = 0;
-    while (el.scrollWidth > el.clientWidth + 0.5 && fs > min && i++ < 40) {
-      fs *= 0.95;
-      el.style.fontSize = fs + 'px';
+  // if a tall header (e.g. curved name) leaves too little room, shrink the field rows to fit
+  $$('.idcard', root).forEach(card => {
+    const base = parseFloat(card.dataset.fs) || 7;
+    card.style.setProperty('--fs', base);
+    const f = card.querySelector('.c-fields');
+    if (!f) return;
+    const cs = getComputedStyle(f);
+    const need = [...f.children].reduce((t, r) => t + r.offsetHeight, 0) + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const have = f.clientHeight;
+    if (need > have + 0.5 && have > 0) card.style.setProperty('--fs', (base * have / need * 0.97).toFixed(3));
+  });
+  $$('[data-fit]', root).forEach(box => {
+    const inner = box.firstElementChild;
+    if (!inner) return;
+    inner.style.transform = ''; inner.style.fontSize = '';
+    const cs = getComputedStyle(box);
+    const avail = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    let w = inner.offsetWidth;
+    if (!w || avail <= 0 || w <= avail + 0.3) return;
+    let r = avail / w;
+    if (r < MIN_SQUEEZE) {
+      const fs = parseFloat(getComputedStyle(inner).fontSize);
+      inner.style.fontSize = (fs * r / MIN_SQUEEZE) + 'px';
+      w = inner.offsetWidth;
+      r = Math.min(1, avail / w);
+    }
+    inner.style.transform = `scaleX(${(r * 0.995).toFixed(4)})`;
+  });
+  $$('[data-fit-svg]', root).forEach(tp => {
+    tp.removeAttribute('textLength'); tp.removeAttribute('lengthAdjust');
+    const path = root.querySelector('#' + tp.dataset.fitSvg) || document.getElementById(tp.dataset.fitSvg);
+    const text = tp.closest('text');
+    if (!path || !text) return;
+    const [W, pad, sag, up, base] = (tp.dataset.arc || '').split(',').map(Number);
+    const arcPath = c => {           // arc of chord c with the chosen bend, centred
+      const r = (c * c / 4 + sag * sag) / (2 * sag);
+      return { d: `M ${(W - c) / 2} ${base} A ${r} ${r} 0 0 ${up} ${(W + c) / 2} ${base}`, len: 2 * r * Math.asin(Math.min(1, c / (2 * r))) };
+    };
+    const full = W - 2 * pad;
+    path.setAttribute('d', arcPath(full).d);
+    const len = text.getComputedTextLength();
+    const maxLen = arcPath(full).len * 0.98;
+    if (len > maxLen) {
+      tp.setAttribute('textLength', maxLen.toFixed(2)); tp.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+    } else if (sag) {
+      // shrink the arc to the text so both ends of the name sit on the curve's ends
+      let lo = 10, hi = full;
+      for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (arcPath(m).len < len * 1.03) lo = m; else hi = m; }
+      path.setAttribute('d', arcPath(hi).d);
     }
   });
 }
@@ -324,7 +490,7 @@ function layout() {
 function sheetHTML(cards, Lo) {
   const { w, h } = cardPx();
   return `<div class="sheet ${S.print.cutMarks ? 'cut' : ''} ${S.print.vcenter ? 'vc' : ''}" style="width:${Lo.pw}mm;height:${Lo.ph}mm;padding:${Lo.m}mm">
-    <div class="sheet-grid" style="grid-template-columns:repeat(${Lo.cols},${w}px);grid-auto-rows:${h}px;gap:${Lo.g}mm">
+    <div class="sheet-grid" style="grid-template-columns:repeat(${Lo.cols},${w}px);grid-template-rows:repeat(${Lo.rows},${h}px);gap:${Lo.g}mm">
       ${cards.map(st => `<div class="slot" style="outline-offset:${Lo.g / 2}mm">${renderCard(st, 1)}</div>`).join('')}
     </div></div>`;
 }
@@ -341,10 +507,10 @@ function schedulePreview() {
   rafId = requestAnimationFrame(renderPreview);
 }
 function renderPreview() {
+  ensureCardFonts();
   const cs = $('#cardStage'), ss = $('#sheetStage');
   cs.hidden = ui.pmode !== 'card';
   ss.hidden = ui.pmode !== 'sheet';
-  $('#zoomWrap').style.visibility = ui.pmode === 'card' ? 'visible' : 'hidden';
   if (ui.pmode === 'card') {
     const st = getCur();
     cs.innerHTML = renderCard(st || demoStudent(), ui.zoom || 2) +
@@ -353,6 +519,7 @@ function renderPreview() {
   } else {
     renderSheetPreview();
   }
+  syncZoomUI();
   updateNav();
 }
 function renderSheetPreview() {
@@ -361,17 +528,17 @@ function renderSheetPreview() {
   let list = getPrintList(), demo = false;
   if (!list.length) { list = Array(Lo.per).fill(demoStudent()); demo = true; }
   const pages = chunk(list, Lo.per);
-  const shown = pages.slice(0, 3);
+  const shown = pages.slice(0, 6);
   const pwPx = Lo.pw * MM, phPx = Lo.ph * MM;
-  const avail = Math.max(220, $('#previewBody').clientWidth - 48);
-  const s = Math.min(1, avail / pwPx);
+  if (!ui.szoom) ui.szoom = fitSheetZoom();
+  const s = ui.szoom;
   ss.innerHTML =
     (demo ? '<p class="sheet-note">প্রিন্টের তালিকা খালি, তাই নমুনা দিয়ে লেআউট দেখানো হচ্ছে</p>' : '') +
     shown.map((p, i) => `<p class="sheet-label">পৃষ্ঠা ${toBnNum(i + 1)} / ${toBnNum(pages.length)}</p>
       <div class="sheet-wrap" style="width:${pwPx * s}px;height:${phPx * s}px">
         <div style="width:${pwPx}px;transform:scale(${s});transform-origin:0 0">${sheetHTML(p, Lo)}</div>
       </div>`).join('') +
-    (pages.length > 3 ? `<p class="sheet-note">আরও ${toBnNum(pages.length - 3)}টি পৃষ্ঠা প্রিন্টে থাকবে</p>` : '');
+    (pages.length > 6 ? `<p class="sheet-note">আরও ${toBnNum(pages.length - 6)}টি পৃষ্ঠা প্রিন্টে থাকবে</p>` : '');
   autoFit(ss);
 }
 function updateNav() {
@@ -384,18 +551,35 @@ function fitZoom() {
   const { w, h } = cardPx();
   const availW = body.clientWidth - 64, availH = body.clientHeight - 90;
   if (availW <= 0 || availH <= 0) return 2;
-  return Math.max(0.6, Math.min(3.5, Math.min(availW / w, availH / h)));
+  return Math.max(0.6, Math.min(4, Math.min(availW / w, availH / h)));
+}
+/* whole page visible: fit both width and height */
+function fitSheetZoom() {
+  const body = $('#previewBody');
+  const Lo = layout();
+  const availW = body.clientWidth - 48, availH = body.clientHeight - 80;
+  if (availW <= 0 || availH <= 0) return 0.5;
+  return Math.max(0.15, Math.min(1.5, Math.min(availW / (Lo.pw * MM), availH / (Lo.ph * MM))));
+}
+function syncZoomUI() {
+  const z = $('#zoom'), card = ui.pmode === 'card';
+  z.min = card ? 0.6 : 0.15;
+  z.max = card ? 4 : 1.5;
+  z.step = 0.01;
+  const v = card ? (ui.zoom || 2) : (ui.szoom || 0.5);
+  z.value = v;
+  $('#zoomVal').textContent = card ? Math.round(v * 100 / 2) * 2 + '%' : Math.round(v * 100) + '%';
 }
 
 /* ---------- students ---------- */
 const getCur = () => STU.find(s => s.uid === cur) || null;
 function newStudent(data = {}) {
-  return { uid: uid(), name: '', father: '', mother: '', class: '', group: '', roll: '', session: '', id: '', photo: '', sel: true, ...data };
+  return { uid: uid(), name: '', father: '', mother: '', class: '', group: '', roll: '', session: '', photo: '', sel: true, ...data };
 }
 function renderList() {
   $('#stuCount').textContent = toBnNum(STU.length);
   const q = ui.search.trim().toLowerCase(), qn = toEnNum(q);
-  const items = STU.filter(s => !q || (s.name || '').toLowerCase().includes(q) || toEnNum(s.roll || '').includes(qn) || toEnNum(s.id || '').includes(qn));
+  const items = STU.filter(s => !q || (s.name || '').toLowerCase().includes(q) || toEnNum(s.roll || '').includes(qn));
   const list = $('#stuList');
   if (!STU.length) {
     list.innerHTML = '<li class="empty">এখনও কোনো শিক্ষার্থী যোগ করা হয়নি।<br>“নতুন শিক্ষার্থী” বা “JSON থেকে যোগ” চাপুন।</li>';
@@ -470,7 +654,33 @@ function populate() {
 function updateOutputs() {
   $$('output[data-for]').forEach(o => { o.textContent = getPath(S, o.dataset.for); });
   const { w, h } = cardPx();
-  $('#sizeInfo').textContent = `প্রিন্টে মাপ হবে ${(w / MM).toFixed(1)} × ${(h / MM).toFixed(1)} মিমি (${(w / MM / 10).toFixed(2)} × ${(h / MM / 10).toFixed(2)} সেমি)। সাধারণ আইডি কার্ড 54 × 86 মিমি, এর কাছাকাছি চাইলে একক “pt” দিন।`;
+  $('#sizeInfo').textContent = `প্রিন্টে মাপ হবে ${(w / MM).toFixed(1)} × ${(h / MM).toFixed(1)} মিমি। আপনার Figma ফাইলে A4 = 595 × 842, তাই সেখানকার মাপ “Figma px” এককে দিলে প্রিন্টেও হুবহু একই আসবে। A4 এ এমন ৯টা কার্ড আঁটে।`;
+}
+function buildFontSelects() {
+  const up = A.fonts || [];
+  $$('select[data-fonts]').forEach(sel => {
+    const lang = sel.dataset.fonts;
+    const reg = FONTS.filter(f => f.lang === lang && !f.style);
+    const sty = FONTS.filter(f => f.lang === lang && f.style);
+    const opt = f => `<option value="${esc(f.n)}">${esc(f.n)}</option>`;
+    sel.innerHTML =
+      `<optgroup label="${lang === 'bn' ? 'সাধারণ' : 'Regular'}">${reg.map(opt).join('')}</optgroup>` +
+      `<optgroup label="${lang === 'bn' ? 'স্টাইলিশ (প্রতিষ্ঠানের নামের জন্য)' : 'Stylish (for institution name)'}">${sty.map(opt).join('')}</optgroup>` +
+      (up.length ? `<optgroup label="আপলোড করা ফন্ট">${up.map(opt).join('')}</optgroup>` : '');
+  });
+}
+function updateFontSamples() {
+  $$('[data-sample]').forEach(el => {
+    const n = getPath(S, el.dataset.sample);
+    ensureFont(n);
+    el.style.fontFamily = `${famCSS(n)},'Hind Siliguri',sans-serif`;
+  });
+}
+function renderFontList() {
+  const up = A.fonts || [];
+  $('#fontList').innerHTML = up.map((f, i) =>
+    `<li><span style="font-family:'${esc(f.n)}'">${esc(f.n)} <small>আমার সোনার বাংলা · Aa</small></span><button type="button" class="del" data-font-del="${i}" title="ফন্ট মুছুন" aria-label="ফন্ট মুছুন">✕</button></li>`
+  ).join('');
 }
 function updateCapacity() {
   const Lo = layout(), el = $('#capInfo');
@@ -528,6 +738,7 @@ function setTab(tab) {
   setPMode(tab === 'print' ? 'sheet' : 'card');
 }
 function setPMode(m) {
+  if (m === 'sheet' && ui.pmode !== 'sheet') ui.szoom = null;
   ui.pmode = m;
   $$('[data-pmode]').forEach(b => b.classList.toggle('active', b.dataset.pmode === m));
   schedulePreview();
@@ -557,6 +768,8 @@ async function doPrint() {
   await waitImages(area);
   try { await document.fonts.ready; } catch (e) {}
   autoFit(area);
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  autoFit(area);
   setTimeout(() => window.print(), 60);
 }
 window.addEventListener('afterprint', () => { $('#printArea').innerHTML = ''; });
@@ -576,9 +789,11 @@ function bindEvents() {
     save('settings');
     updateOutputs();
     const b = el.dataset.bind;
-    if (b.startsWith('card.') && ui.pmode === 'card') ui.zoom = fitZoom(), $('#zoom').value = ui.zoom;
+    if (b.startsWith('card.')) { ui.zoom = fitZoom(); ui.szoom = null; }
+    if (b.startsWith('print.paper')) ui.szoom = null;
     if (b.startsWith('defaults.')) renderEditor();
     if (b.startsWith('print.') || b.startsWith('card.')) updatePrintCount();
+    if (/font/i.test(b)) updateFontSamples();
     schedulePreview();
   });
 
@@ -588,19 +803,25 @@ function bindEvents() {
   $$('[data-nav]').forEach(b => b.onclick = () => step(+b.dataset.nav));
 
   $('#zoom').addEventListener('input', e => {
-    ui.zoom = parseFloat(e.target.value);
-    try { localStorage.setItem('idc_zoom', ui.zoom); } catch (er) {}
+    const v = parseFloat(e.target.value);
+    if (ui.pmode === 'card') { ui.zoom = v; try { localStorage.setItem('idc_zoom', v); } catch (er) {} }
+    else ui.szoom = v;
     schedulePreview();
   });
+  $('#zoomFit').onclick = () => {
+    if (ui.pmode === 'card') { ui.zoom = fitZoom(); try { localStorage.removeItem('idc_zoom'); } catch (er) {} }
+    else ui.szoom = fitSheetZoom();
+    schedulePreview();
+  };
 
   // mobile preview
   $('#openPreview').onclick = () => {
     $('#previewPanel').classList.add('open');
     document.body.style.overflow = 'hidden';
-    requestAnimationFrame(() => { if (!localStorage.getItem('idc_zoom')) { ui.zoom = fitZoom(); $('#zoom').value = ui.zoom; } schedulePreview(); });
+    requestAnimationFrame(() => { if (!localStorage.getItem('idc_zoom')) ui.zoom = fitZoom(); ui.szoom = null; schedulePreview(); });
   };
   $('#closePreview').onclick = () => { $('#previewPanel').classList.remove('open'); document.body.style.overflow = ''; };
-  let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(schedulePreview, 150); });
+  let rT; window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { ui.szoom = null; schedulePreview(); }, 150); });
 
   // students
   $('#addStudent').onclick = () => {
@@ -665,7 +886,7 @@ function bindEvents() {
     for (const f of files) {
       const base = toEnNum(f.name.replace(/\.[^.]+$/, '')).trim().toLowerCase();
       const norm = v => toEnNum(v || '').trim().toLowerCase();
-      const st = STU.find(s => norm(s.roll) && norm(s.roll) === base) || STU.find(s => norm(s.id) && norm(s.id) === base) || STU.find(s => (s.name || '').trim().toLowerCase() === base);
+      const st = STU.find(s => norm(s.roll) && norm(s.roll) === base) || STU.find(s => (s.name || '').trim().toLowerCase() === base);
       if (!st) { miss.push(f.name); continue; }
       try { st.photo = await readImage(f, PHOTO_OPT); ok++; } catch (er) { miss.push(f.name); }
     }
@@ -680,7 +901,7 @@ function bindEvents() {
   $('#jsonCancel').onclick = () => dlg.close();
   $('#jsonSample').onclick = () => {
     $('#jsonText').value = JSON.stringify([
-      { name: 'সাদিয়া ইসলাম', father: 'মোঃ রফিকুল ইসলাম', mother: 'মোসাঃ রাশিদা বেগম', class: 'দ্বাদশ', group: 'মানবিক', roll: '220', session: '২০২৫-২০২৬', id: '59313' },
+      { name: 'সাদিয়া ইসলাম', father: 'মোঃ রফিকুল ইসলাম', mother: 'মোসাঃ রাশিদা বেগম', class: 'দ্বাদশ', group: 'মানবিক', roll: '220', session: '২০২৫-২০২৬' },
       { name: 'তাসনিম আক্তার', father: 'মোঃ আব্দুল করিম', mother: 'মোসাঃ নাসিমা খাতুন', class: 'দ্বাদশ', group: 'বিজ্ঞান', roll: '221', session: '২০২৫-২০২৬' }
     ], null, 2);
   };
@@ -708,7 +929,11 @@ function bindEvents() {
   $$('[data-asset]').forEach(inp => inp.addEventListener('change', async e => {
     const f = e.target.files[0], k = inp.dataset.asset; e.target.value = '';
     if (!f) return;
-    try { A[k] = await readImage(f, assetOpt(k, f)); save('assets'); renderAssets(); schedulePreview(); toast('আপলোড হয়েছে'); }
+    try {
+      A[k] = await readImage(f, assetOpt(k, f));
+      if (k === 'background') { S.design.bgDeco = false; save('settings'); populate(); }
+      save('assets'); renderAssets(); schedulePreview(); toast('আপলোড হয়েছে');
+    }
     catch (er) { toast('ছবিটি খোলা যায়নি'); }
   }));
   $$('[data-asset-remove]').forEach(b => b.onclick = () => {
@@ -717,7 +942,7 @@ function bindEvents() {
 
   $('#sizeReset').onclick = () => {
     S.card = clone(DEFAULT_SETTINGS.card); save('settings'); populate(); updatePrintCount();
-    ui.zoom = fitZoom(); $('#zoom').value = ui.zoom; schedulePreview();
+    ui.zoom = fitZoom(); ui.szoom = null; schedulePreview();
   };
 
   // backup
@@ -734,10 +959,11 @@ function bindEvents() {
       const d = JSON.parse(await f.text());
       if (!d || d.app !== 'idcard-maker') throw new Error('bad');
       if (!confirm('এখনকার সব তথ্যের জায়গায় ব্যাকআপের তথ্য বসবে। চালিয়ে যাবেন?')) return;
-      S = mergeSettings(d.settings); A = { logo: null, signature: null, background: null, ...(d.assets || {}) };
+      S = mergeSettings(d.settings); A = { logo: null, signature: null, background: null, fonts: [], ...(d.assets || {}) };
+      for (const f of A.fonts || []) await registerUploadedFont(f);
       STU = Array.isArray(d.students) ? d.students : []; cur = d.cur && STU.find(s => s.uid === d.cur) ? d.cur : STU[0]?.uid || null;
       save('settings', 'assets', 'students');
-      buildFieldEditor(); populate(); renderAssets(); renderList(); renderEditor(); schedulePreview();
+      buildFieldEditor(); buildFontSelects(); populate(); renderAssets(); renderFontList(); updateFontSamples(); renderList(); renderEditor(); schedulePreview();
       toast('ব্যাকআপ থেকে সব ফিরে এসেছে');
     } catch (er) { toast('এটি এই অ্যাপের ব্যাকআপ ফাইল নয়'); }
   });
@@ -747,6 +973,36 @@ function bindEvents() {
     await Store.clear();
     location.reload();
   };
+
+  // custom fonts
+  $('#fontUpload').addEventListener('change', async e => {
+    const files = [...e.target.files]; e.target.value = '';
+    let ok = 0;
+    for (const file of files) {
+      if (!/\.(ttf|otf|woff2?)$/i.test(file.name)) { toast('শুধু TTF, OTF বা WOFF ফাইল দিন'); continue; }
+      if (file.size > 12 * 1024 * 1024) { toast(`${file.name} অনেক বড় (১২ MB এর বেশি)`); continue; }
+      const base = file.name.replace(/\.[^.]+$/, '').replace(/[^\w\u0980-\u09FF -]/g, '').trim() || 'My Font';
+      let n = base, i = 2;
+      while (fontEntry(n)) n = `${base} ${i++}`;
+      const data = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file); });
+      const f = { n, data };
+      if (!(await registerUploadedFont(f))) { toast(`${file.name} ফন্টটি খোলা যায়নি`); continue; }
+      A.fonts = [...(A.fonts || []), f];
+      ok++;
+    }
+    if (!ok) return;
+    save('assets'); buildFontSelects(); populate(); renderFontList(); updateFontSamples();
+    toast(`${toBnNum(ok)}টি ফন্ট যোগ হয়েছে। এখন উপরের তালিকা থেকে বেছে নিন।`);
+  });
+  $('#fontList').addEventListener('click', e => {
+    const b = e.target.closest('[data-font-del]'); if (!b) return;
+    const f = A.fonts[+b.dataset.fontDel];
+    if (!f || !confirm(`“${f.n}” ফন্টটি মুছবেন?`)) return;
+    A.fonts.splice(+b.dataset.fontDel, 1);
+    const D = S.design, d = DEFAULT_SETTINGS.design;
+    ['fontBn', 'fontEn', 'collegeFontBn', 'collegeFontEn'].forEach(k => { if (D[k] === f.n) D[k] = d[k]; });
+    save('assets', 'settings'); buildFontSelects(); populate(); renderFontList(); updateFontSamples(); schedulePreview();
+  });
 
   $('#printBtn').onclick = doPrint;
   document.addEventListener('keydown', e => {
@@ -759,22 +1015,26 @@ async function init() {
   setTheme(document.documentElement.dataset.theme || 'light');
   await Store.open();
   S = mergeSettings(await Store.get('settings'));
-  A = { logo: null, signature: null, background: null, ...((await Store.get('assets')) || {}) };
+  A = { logo: null, signature: null, background: null, fonts: [], ...((await Store.get('assets')) || {}) };
+  for (const f of A.fonts || []) await registerUploadedFont(f);
   const st = await Store.get('students');
   STU = Array.isArray(st?.list) ? st.list : [];
   cur = st?.cur && STU.find(s => s.uid === st.cur) ? st.cur : (STU[0]?.uid || null);
 
+  if (dirty.size === 0 && S.v === 2) save('settings');   // persist migrations
   buildFieldEditor();
   buildStudentForm();
+  buildFontSelects();
   populate();
   renderAssets();
+  renderFontList();
+  updateFontSamples();
   renderList();
   renderEditor();
   bindEvents();
 
   const z = parseFloat(localStorage.getItem('idc_zoom'));
   ui.zoom = z > 0 ? z : fitZoom();
-  $('#zoom').value = ui.zoom;
   renderPreview();
   setStatus(false);
 

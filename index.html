@@ -9,7 +9,7 @@
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('idc_theme')||'light'}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Tiro+Bangla&family=Baloo+Da+2:wght@400;600;700&family=Anek+Bangla:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style id="pageStyle">@page{size:210mm 297mm;margin:0}</style>
 </head>
@@ -189,38 +189,70 @@
         <div class="checks">
           <label class="chk"><input type="checkbox" data-bind="design.bgDeco"> বিল্ট-ইন নকশা</label>
           <label class="chk"><input type="checkbox" data-bind="design.watermark"> লোগোর জলছাপ</label>
-          <label class="chk"><input type="checkbox" data-bind="design.showTitle"> শিরোনাম পিল</label>
-          <label class="chk"><input type="checkbox" data-bind="design.showBar"> নিচের মোবাইল বার</label>
+          <label class="chk"><input type="checkbox" data-bind="design.showTitle"> শিরোনাম লেখা</label>
+          <label class="chk"><input type="checkbox" data-bind="design.titlePill"> শিরোনামের পিল রং</label>
+          <label class="chk"><input type="checkbox" data-bind="design.showBar"> নিচের মোবাইল লেখা</label>
+          <label class="chk"><input type="checkbox" data-bind="design.barBg"> মোবাইল বারের রং</label>
           <label class="chk"><input type="checkbox" data-bind="design.fieldBg"> তথ্যের ঘরে শেড</label>
+        </div>
+        <p class="hint">নিজের ব্যাকগ্রাউন্ডে পিল বা বার আঁকা থাকলে শুধু রং বন্ধ করুন, লেখা থেকে যাবে।</p>
+        <label class="fld" style="margin-top:10px"><span>উপরের অংশ নিচে নামান <output data-for="design.headTop"></output></span>
+          <input type="range" min="-4" max="30" step="0.5" data-bind="design.headTop">
+        </label>
+      </div>
+
+      <div class="box">
+        <h3>রং</h3>
+        <div class="grid3">
+          <label class="fld"><span>মূল রং</span><input type="color" data-bind="design.primary"></label>
+          <label class="fld"><span>কার্ডের রং</span><input type="color" data-bind="design.cardBg"></label>
+          <label class="fld"><span>লেখার রং</span><input type="color" data-bind="design.text"></label>
+          <label class="fld"><span>ঘরের শেড</span><input type="color" data-bind="design.fieldBgColor"></label>
+          <label class="fld"><span>শিরোনামের লেখা</span><input type="color" data-bind="design.titleColor"></label>
+          <label class="fld"><span>মোবাইল বারের লেখা</span><input type="color" data-bind="design.barColor"></label>
+        </div>
+      </div>
+
+
+      <div class="box">
+        <h3>ফন্ট</h3>
+        <div class="grid2">
+          <label class="fld"><span>বাংলা কার্ডের লেখা</span><select data-bind="design.fontBn" data-fonts="bn"></select>
+            <span class="font-sample" data-sample="design.fontBn">শিক্ষার্থীর নাম : রোল নং ২২০</span></label>
+          <label class="fld"><span>English card text</span><select data-bind="design.fontEn" data-fonts="en"></select>
+            <span class="font-sample" data-sample="design.fontEn">Student's Name : Roll No. 220</span></label>
+          <label class="fld"><span>প্রতিষ্ঠানের নাম (বাংলা)</span><select data-bind="design.collegeFontBn" data-fonts="bn"></select>
+            <span class="font-sample big" data-sample="design.collegeFontBn">গার্লস স্কুল এন্ড কলেজ</span></label>
+          <label class="fld"><span>Institution name (English)</span><select data-bind="design.collegeFontEn" data-fonts="en"></select>
+            <span class="font-sample big" data-sample="design.collegeFontEn">Girls School &amp; College</span></label>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+          <label class="fld"><span>প্রতিষ্ঠানের নামের সাইজ <output data-for="design.collegeSize"></output></span>
+            <input type="range" min="5" max="13" step="0.1" data-bind="design.collegeSize"></label>
+          <label class="fld"><span>তথ্যের লেখার সাইজ <output data-for="design.fieldSize"></output></span>
+            <input type="range" min="5" max="9" step="0.1" data-bind="design.fieldSize"></label>
+        </div>
+        <div class="font-upload">
+          <div class="btn-row"><label class="btn sm">নিজের ফন্ট আপলোড<input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" multiple hidden></label></div>
+          <p class="hint">TTF, OTF বা WOFF ফাইল দিন। আপলোড করা ফন্ট উপরের সব তালিকায় পাবেন। বাংলার জন্য ইউনিকোড ফন্ট লাগবে; বিজয়ের SutonnyMJ ধরনের ANSI ফন্টে লেখা ভেঙে যাবে।</p>
+          <ul id="fontList" class="font-list"></ul>
         </div>
       </div>
 
       <div class="box">
-        <h3>রং ও ফন্ট</h3>
-        <div class="grid3">
-          <label class="fld"><span>মূল রং</span><input type="color" data-bind="design.primary"></label>
-          <label class="fld"><span>কার্ডের রং</span><input type="color" data-bind="design.cardBg"></label>
-          <label class="fld"><span>প্রতিষ্ঠানের নাম</span><input type="color" data-bind="design.cc"></label>
-          <label class="fld"><span>লেখার রং</span><input type="color" data-bind="design.text"></label>
-          <label class="fld"><span>ঘরের শেড</span><input type="color" data-bind="design.fieldBgColor"></label>
+        <h3>প্রতিষ্ঠানের নামের স্টাইল</h3>
+        <label class="fld"><span>বাঁক <output data-for="design.collegeCurve"></output></span>
+          <input type="range" min="-30" max="30" step="1" data-bind="design.collegeCurve"></label>
+        <p class="hint" style="margin-top:0">০ = সোজা। ডানে টানলে ধনুকের মতো উপরে বাঁকবে, বামে টানলে নিচে বাঁকবে।</p>
+        <div class="chips" role="radiogroup" aria-label="লেখার ইফেক্ট" style="margin-top:12px">
+          <label class="chip"><input type="radio" name="cfx" value="none" data-bind="design.collegeEffect"><span>সাধারণ</span></label>
+          <label class="chip"><input type="radio" name="cfx" value="shadow" data-bind="design.collegeEffect"><span>ছায়া</span></label>
+          <label class="chip"><input type="radio" name="cfx" value="outline" data-bind="design.collegeEffect"><span>আউটলাইন</span></label>
+          <label class="chip"><input type="radio" name="cfx" value="outline-shadow" data-bind="design.collegeEffect"><span>আউটলাইন + ছায়া</span></label>
         </div>
         <div class="grid2" style="margin-top:12px">
-          <label class="fld"><span>কার্ডের ফন্ট</span>
-            <select data-bind="design.font">
-              <option value="Hind Siliguri">হিন্দ শিলিগুড়ি</option>
-              <option value="Noto Sans Bengali">নোটো স্যান্স</option>
-              <option value="Noto Serif Bengali">নোটো সেরিফ</option>
-              <option value="Tiro Bangla">তিরো বাংলা</option>
-              <option value="Baloo Da 2">বালু দা</option>
-              <option value="Anek Bangla">অনেক বাংলা</option>
-            </select>
-          </label>
-          <label class="fld"><span>প্রতিষ্ঠানের নামের সাইজ <output data-for="design.collegeSize"></output></span>
-            <input type="range" min="4" max="9" step="0.1" data-bind="design.collegeSize">
-          </label>
-          <label class="fld"><span>তথ্যের লেখার সাইজ <output data-for="design.fieldSize"></output></span>
-            <input type="range" min="4" max="7.5" step="0.1" data-bind="design.fieldSize">
-          </label>
+          <label class="fld"><span>আউটলাইনের রং</span><input type="color" data-bind="design.collegeStroke"></label>
+          <label class="fld"><span>নামের রং</span><input type="color" data-bind="design.cc"></label>
         </div>
       </div>
 
@@ -263,14 +295,15 @@
           <label class="fld"><span>উচ্চতা</span><input type="number" min="20" step="0.5" data-bind="card.h"></label>
           <label class="fld"><span>একক</span>
             <select data-bind="card.unit">
-              <option value="px">px</option>
+              <option value="fpx">Figma px (A4 = 595 × 842)</option>
+              <option value="mm">মিলিমিটার (mm)</option>
               <option value="pt">pt</option>
-              <option value="mm">mm</option>
+              <option value="px">স্ক্রিন px (96 dpi)</option>
             </select>
           </label>
         </div>
         <p class="hint" id="sizeInfo"></p>
-        <button type="button" class="btn sm" id="sizeReset" style="margin-top:8px">146 × 237 এ ফেরত যান</button>
+        <button type="button" class="btn sm" id="sizeReset" style="margin-top:8px">আপনার Figma মাপে (146 × 237) ফেরত যান</button>
       </div>
     </div>
 
@@ -308,7 +341,7 @@
         <button type="button" class="btn primary big" id="printBtn">প্রিন্ট করুন</button>
         <div class="tip">
           <b>প্রিন্ট ডায়ালগে যা দেখে নেবেন</b>
-          <span>Margins: None · Scale: 100% (Default) · Background graphics: চালু। PDF বানাতে Destination থেকে “Save as PDF” বেছে নিন।</span>
+          <span>Margins: None, Scale: 100% (Default), Background graphics: চালু। PDF বানাতে Destination থেকে “Save as PDF” বেছে নিন।</span>
         </div>
       </div>
     </div>
@@ -321,7 +354,8 @@
         <button type="button" data-pmode="card" class="active">কার্ড</button>
         <button type="button" data-pmode="sheet">পুরো পেজ</button>
       </div>
-      <label class="zoom" id="zoomWrap"><span>জুম</span><input type="range" id="zoom" min="0.6" max="3.5" step="0.05"></label>
+      <label class="zoom" id="zoomWrap"><span>জুম</span><input type="range" id="zoom" min="0.6" max="3.5" step="0.01"><output id="zoomVal"></output></label>
+      <button type="button" class="btn sm" id="zoomFit" title="পুরোটা দেখুন">ফিট</button>
       <button type="button" class="icon-btn close-preview" id="closePreview" aria-label="প্রিভিউ বন্ধ">✕</button>
     </div>
     <div class="preview-body" id="previewBody">
@@ -341,7 +375,7 @@
 <dialog id="jsonDlg" class="dlg">
   <div class="dlg-inner">
     <h3>JSON থেকে শিক্ষার্থী যোগ</h3>
-    <p class="hint">Key হিসেবে <code>name, father, mother, class, group, roll, session, id</code> ব্যবহার করুন। বাংলা key (যেমন “নাম”, “রোল”) দিলেও চলবে। ছবি পরে আলাদা করে দিন।</p>
+    <p class="hint">Key হিসেবে <code>name, father, mother, class, group, roll, session</code> ব্যবহার করুন। বাংলা key (যেমন “নাম”, “রোল”) দিলেও চলবে। ছবি পরে আলাদা করে দিন।</p>
     <textarea id="jsonText" spellcheck="false" rows="12" placeholder='[ { "name": "...", "father": "...", "roll": "1" } ]'></textarea>
     <p id="jsonErr" class="err" role="alert"></p>
     <div class="dlg-foot">
