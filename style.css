@@ -349,7 +349,7 @@ input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:17px;hei
 .c-logo img{max-width:100%;max-height:100%;object-fit:contain;display:block}
 
 /* photo */
-.c-photo-wrap{position:relative;width:calc(var(--u) * 51);height:calc(var(--u) * 64);flex:none}
+.c-photo-wrap{position:relative;width:calc(var(--u) * 56);height:calc(var(--u) * 56);flex:none}
 .c-photo-wrap.shp-circle{width:calc(var(--u) * 56);height:calc(var(--u) * 56)}
 .c-photo{width:100%;height:100%;padding:calc(var(--u) * var(--fw));background:var(--fc)}
 .c-photo-in{width:100%;height:100%;overflow:hidden;background:#dfe3ea}
