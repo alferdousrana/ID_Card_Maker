@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="bn" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>আইডি কার্ড মেকার · ID Card Maker</title>
+<meta name="description" content="স্কুল-কলেজের শিক্ষার্থীদের আইডি কার্ড বানান ও A4 পেজে প্রিন্ট করুন। ডাটাবেস লাগবে না, সব তথ্য আপনার ব্রাউজারে থাকে।">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪪</text></svg>">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('idc_theme')||'light'}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Tiro+Bangla&family=Baloo+Da+2:wght@400;600;700&family=Anek+Bangla:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style id="pageStyle">@page{size:210mm 297mm;margin:0}</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"><i></i></span>
+    <div>
+      <strong>আইডি কার্ড মেকার</strong>
+      <small>ID Card Maker</small>
+    </div>
+  </div>
+  <div class="top-actions">
+    <div class="seg" role="radiogroup" aria-label="কার্ডের ভাষা">
+      <label><input type="radio" name="lang" value="bn" data-bind="lang"><span>বাংলা</span></label>
+      <label><input type="radio" name="lang" value="en" data-bind="lang"><span>English</span></label>
+    </div>
+    <span id="saveStatus" class="save-status">সংরক্ষিত</span>
+    <button id="themeBtn" class="icon-btn" type="button" title="লাইট / ডার্ক মোড" aria-label="থিম পরিবর্তন">☾</button>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- ============ EDITOR ============ -->
+  <section class="editor">
+    <nav class="tabs" role="tablist">
+      <button type="button" data-tab="students" class="active">শিক্ষার্থী</button>
+      <button type="button" data-tab="institution">প্রতিষ্ঠান</button>
+      <button type="button" data-tab="design">ডিজাইন</button>
+      <button type="button" data-tab="print">প্রিন্ট</button>
+    </nav>
+
+    <!-- STUDENTS -->
+    <div class="panel" data-panel="students">
+      <div class="box">
+        <div class="box-head">
+          <h3>শিক্ষার্থী তালিকা <span id="stuCount" class="badge">0</span></h3>
+          <div class="btn-row">
+            <button type="button" class="btn primary" id="addStudent">+ নতুন শিক্ষার্থী</button>
+            <button type="button" class="btn" id="openJson">JSON থেকে যোগ</button>
+          </div>
+        </div>
+        <div class="list-tools">
+          <input type="search" id="stuSearch" placeholder="নাম বা রোল দিয়ে খুঁজুন">
+          <label class="btn" title="ফাইলের নাম = রোল নম্বর (যেমন 220.jpg)">একসাথে ছবি<input type="file" id="bulkPhotos" accept="image/*" multiple hidden></label>
+        </div>
+        <div class="list-meta">
+          <label class="chk"><input type="checkbox" id="selectAll"> প্রিন্টের জন্য সব নির্বাচন</label>
+          <button type="button" class="link danger" id="clearAll">সব শিক্ষার্থী মুছুন</button>
+        </div>
+        <ul id="stuList" class="stu-list"></ul>
+        <p class="hint">একসাথে ছবি দিতে ছবির ফাইলের নাম রোল নম্বর রাখুন, যেমন <code>220.jpg</code>। মিলে গেলে ছবি নিজে থেকেই বসে যাবে।</p>
+      </div>
+
+      <div class="box" id="stuEditor">
+        <div class="box-head">
+          <h3>শিক্ষার্থীর তথ্য</h3>
+          <div class="btn-row">
+            <button type="button" class="btn sm" data-nav="-1" title="আগের জন">◀ আগের</button>
+            <button type="button" class="btn sm" data-nav="1" title="পরের জন">পরের ▶</button>
+          </div>
+        </div>
+        <div class="photo-pick">
+          <div class="photo-thumb"><img id="stuPhotoThumb" alt="শিক্ষার্থীর ছবি"></div>
+          <div class="photo-actions">
+            <label class="btn primary">ছবি নির্বাচন<input type="file" id="stuPhoto" accept="image/*" hidden></label>
+            <button type="button" class="btn ghost" id="stuPhotoRemove">ছবি মুছুন</button>
+            <p class="hint">ছবি নিজে থেকেই ফ্রেমে ফিট হবে। পাসপোর্ট সাইজ ছবি সবচেয়ে ভালো দেখায়।</p>
+          </div>
+        </div>
+        <div class="grid2" id="stuFields"></div>
+        <p class="hint" id="stuEmptyHint">কাজ শুরু করতে “নতুন শিক্ষার্থী” চাপুন অথবা JSON থেকে একসাথে অনেকজন যোগ করুন।</p>
+      </div>
+    </div>
+
+    <!-- INSTITUTION -->
+    <div class="panel" data-panel="institution" hidden>
+      <div class="box">
+        <h3>প্রতিষ্ঠানের তথ্য</h3>
+        <div class="grid2">
+          <label class="fld full"><span>প্রতিষ্ঠানের নাম (বাংলা)</span><input type="text" data-bind="college.bn"></label>
+          <label class="fld full"><span>Institution name (English)</span><input type="text" data-bind="college.en"></label>
+          <label class="fld"><span>ঠিকানা (বাংলা)</span><input type="text" data-bind="address.bn"></label>
+          <label class="fld"><span>Address (English)</span><input type="text" data-bind="address.en"></label>
+          <label class="fld"><span>মোবাইল নম্বর</span><input type="tel" data-bind="mobile" inputmode="tel"></label>
+          <label class="fld"><span>মেয়াদ শেষের তারিখ</span><input type="date" data-bind="validDate"></label>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>লোগো ও অধ্যক্ষের স্বাক্ষর</h3>
+        <div class="assets">
+          <div class="asset">
+            <div class="asset-thumb checker"><img data-asset-thumb="logo" alt=""></div>
+            <div class="asset-info">
+              <b>লোগো</b>
+              <small>স্বচ্ছ ব্যাকগ্রাউন্ডের PNG সবচেয়ে ভালো</small>
+              <div class="btn-row">
+                <label class="btn sm">আপলোড<input type="file" accept="image/*" data-asset="logo" hidden></label>
+                <button type="button" class="btn sm ghost" data-asset-remove="logo">মুছুন</button>
+              </div>
+            </div>
+          </div>
+          <div class="asset">
+            <div class="asset-thumb checker"><img data-asset-thumb="signature" alt=""></div>
+            <div class="asset-info">
+              <b>স্বাক্ষর</b>
+              <small>সাদা কাগজে সই করে ছবি তুলুন</small>
+              <div class="btn-row">
+                <label class="btn sm">আপলোড<input type="file" accept="image/*" data-asset="signature" hidden></label>
+                <button type="button" class="btn sm ghost" data-asset-remove="signature">মুছুন</button>
+              </div>
+              <label class="chk small"><input type="checkbox" data-bind="sigRemoveWhite"> আপলোডের সময় সাদা অংশ স্বচ্ছ করুন</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>কার্ডের স্থায়ী লেখা</h3>
+        <div class="grid2">
+          <label class="fld"><span>শিরোনাম (বাংলা)</span><input type="text" data-bind="title.bn"></label>
+          <label class="fld"><span>Title (English)</span><input type="text" data-bind="title.en"></label>
+          <label class="fld"><span>পদবি (বাংলা)</span><input type="text" data-bind="principal.bn"></label>
+          <label class="fld"><span>Designation (English)</span><input type="text" data-bind="principal.en"></label>
+          <label class="fld"><span>মেয়াদ লেবেল (বাংলা)</span><input type="text" data-bind="validLabel.bn"></label>
+          <label class="fld"><span>Validity label (English)</span><input type="text" data-bind="validLabel.en"></label>
+          <label class="fld"><span>মোবাইল লেবেল (বাংলা)</span><input type="text" data-bind="mobileLabel.bn"></label>
+          <label class="fld"><span>Mobile label (English)</span><input type="text" data-bind="mobileLabel.en"></label>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>কার্ডের ঘরগুলো</h3>
+        <p class="hint">লেবেল বদলাতে পারবেন। কোনো ঘর কার্ডে না চাইলে টিক তুলে দিন।</p>
+        <div class="fe-head"><span></span><span>বাংলা লেবেল</span><span>English label</span></div>
+        <div id="fieldEditor" class="field-editor"></div>
+      </div>
+
+      <div class="box">
+        <h3>সবার জন্য একই মান</h3>
+        <p class="hint">শিক্ষার্থীর এই ঘরগুলো ফাঁকা থাকলে এখানকার মান কার্ডে বসবে।</p>
+        <div class="grid3">
+          <label class="fld"><span>শ্রেণী</span><input type="text" data-bind="defaults.class"></label>
+          <label class="fld"><span>বিভাগ</span><input type="text" data-bind="defaults.group"></label>
+          <label class="fld"><span>শিক্ষাবর্ষ</span><input type="text" data-bind="defaults.session"></label>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>ব্যাকআপ</h3>
+        <p class="hint">সব তথ্য এই ব্রাউজারেই থাকে। ব্রাউজারের ডাটা মুছলে হারিয়ে যাবে, তাই মাঝে মাঝে ব্যাকআপ ফাইল নামিয়ে রাখুন। অন্য কম্পিউটারে একই ফাইল দিয়ে সব ফিরিয়ে আনা যায়।</p>
+        <div class="btn-row" style="margin-top:10px">
+          <button type="button" class="btn" id="backupExport">ব্যাকআপ ডাউনলোড</button>
+          <label class="btn">ব্যাকআপ থেকে ফেরত আনুন<input type="file" id="backupImport" accept=".json,application/json" hidden></label>
+          <button type="button" class="btn danger" id="resetAll">সব রিসেট</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESIGN -->
+    <div class="panel" data-panel="design" hidden>
+      <div class="box">
+        <h3>ব্যাকগ্রাউন্ড</h3>
+        <div class="asset">
+          <div class="asset-thumb tall checker"><img data-asset-thumb="background" alt=""></div>
+          <div class="asset-info">
+            <b>নিজের ডিজাইন করা ব্যাকগ্রাউন্ড</b>
+            <small>কার্ডের মাপের অনুপাতে (প্রস্থ : উচ্চতা = 146 : 237) বানালে ঠিকঠাক বসবে</small>
+            <div class="btn-row">
+              <label class="btn sm">আপলোড<input type="file" accept="image/*" data-asset="background" hidden></label>
+              <button type="button" class="btn sm ghost" data-asset-remove="background">মুছুন</button>
+            </div>
+          </div>
+        </div>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" data-bind="design.bgDeco"> বিল্ট-ইন নকশা</label>
+          <label class="chk"><input type="checkbox" data-bind="design.watermark"> লোগোর জলছাপ</label>
+          <label class="chk"><input type="checkbox" data-bind="design.showTitle"> শিরোনাম পিল</label>
+          <label class="chk"><input type="checkbox" data-bind="design.showBar"> নিচের মোবাইল বার</label>
+          <label class="chk"><input type="checkbox" data-bind="design.fieldBg"> তথ্যের ঘরে শেড</label>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>রং ও ফন্ট</h3>
+        <div class="grid3">
+          <label class="fld"><span>মূল রং</span><input type="color" data-bind="design.primary"></label>
+          <label class="fld"><span>কার্ডের রং</span><input type="color" data-bind="design.cardBg"></label>
+          <label class="fld"><span>প্রতিষ্ঠানের নাম</span><input type="color" data-bind="design.cc"></label>
+          <label class="fld"><span>লেখার রং</span><input type="color" data-bind="design.text"></label>
+          <label class="fld"><span>ঘরের শেড</span><input type="color" data-bind="design.fieldBgColor"></label>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+          <label class="fld"><span>কার্ডের ফন্ট</span>
+            <select data-bind="design.font">
+              <option value="Hind Siliguri">হিন্দ শিলিগুড়ি</option>
+              <option value="Noto Sans Bengali">নোটো স্যান্স</option>
+              <option value="Noto Serif Bengali">নোটো সেরিফ</option>
+              <option value="Tiro Bangla">তিরো বাংলা</option>
+              <option value="Baloo Da 2">বালু দা</option>
+              <option value="Anek Bangla">অনেক বাংলা</option>
+            </select>
+          </label>
+          <label class="fld"><span>প্রতিষ্ঠানের নামের সাইজ <output data-for="design.collegeSize"></output></span>
+            <input type="range" min="4" max="9" step="0.1" data-bind="design.collegeSize">
+          </label>
+          <label class="fld"><span>তথ্যের লেখার সাইজ <output data-for="design.fieldSize"></output></span>
+            <input type="range" min="4" max="7.5" step="0.1" data-bind="design.fieldSize">
+          </label>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>কার্ডের বর্ডার</h3>
+        <div class="grid3">
+          <label class="fld"><span>রং</span><input type="color" data-bind="design.borderColor"></label>
+          <label class="fld"><span>পুরুত্ব <output data-for="design.borderWidth"></output></span><input type="range" min="0" max="8" step="0.5" data-bind="design.borderWidth"></label>
+          <label class="fld"><span>কোণা গোল <output data-for="design.radius"></output></span><input type="range" min="0" max="16" step="1" data-bind="design.radius"></label>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>শিক্ষার্থীর ছবির আকৃতি ও ফ্রেম</h3>
+        <div class="chips" role="radiogroup" aria-label="ছবির আকৃতি">
+          <label class="chip"><input type="radio" name="shape" value="rect" data-bind="photo.shape"><span><i class="ico ico-rect"></i>চারকোনা</span></label>
+          <label class="chip"><input type="radio" name="shape" value="rounded" data-bind="photo.shape"><span><i class="ico ico-rounded"></i>গোল কোণা</span></label>
+          <label class="chip"><input type="radio" name="shape" value="circle" data-bind="photo.shape"><span><i class="ico ico-circle"></i>বৃত্ত</span></label>
+          <label class="chip"><input type="radio" name="shape" value="oval" data-bind="photo.shape"><span><i class="ico ico-oval"></i>ডিম্বাকার</span></label>
+          <label class="chip"><input type="radio" name="shape" value="arch" data-bind="photo.shape"><span><i class="ico ico-arch"></i>খিলান</span></label>
+          <label class="chip"><input type="radio" name="shape" value="hexagon" data-bind="photo.shape"><span><i class="ico ico-hexagon"></i>ষড়ভুজ</span></label>
+        </div>
+        <div class="chips" role="radiogroup" aria-label="ফ্রেমের ধরন" style="margin-top:12px">
+          <label class="chip"><input type="radio" name="frame" value="none" data-bind="photo.frame"><span>ফ্রেম নেই</span></label>
+          <label class="chip"><input type="radio" name="frame" value="solid" data-bind="photo.frame"><span>সাধারণ</span></label>
+          <label class="chip"><input type="radio" name="frame" value="double" data-bind="photo.frame"><span>ডাবল</span></label>
+          <label class="chip"><input type="radio" name="frame" value="gradient" data-bind="photo.frame"><span>দুই রঙা</span></label>
+          <label class="chip"><input type="radio" name="frame" value="shadow" data-bind="photo.frame"><span>ছায়াসহ</span></label>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+          <label class="fld"><span>ফ্রেমের রং</span><input type="color" data-bind="photo.color"></label>
+          <label class="fld"><span>ফ্রেমের পুরুত্ব <output data-for="photo.width"></output></span><input type="range" min="0" max="5" step="0.5" data-bind="photo.width"></label>
+        </div>
+      </div>
+
+      <div class="box">
+        <h3>কার্ডের মাপ</h3>
+        <div class="grid3">
+          <label class="fld"><span>প্রস্থ</span><input type="number" min="20" step="0.5" data-bind="card.w"></label>
+          <label class="fld"><span>উচ্চতা</span><input type="number" min="20" step="0.5" data-bind="card.h"></label>
+          <label class="fld"><span>একক</span>
+            <select data-bind="card.unit">
+              <option value="px">px</option>
+              <option value="pt">pt</option>
+              <option value="mm">mm</option>
+            </select>
+          </label>
+        </div>
+        <p class="hint" id="sizeInfo"></p>
+        <button type="button" class="btn sm" id="sizeReset" style="margin-top:8px">146 × 237 এ ফেরত যান</button>
+      </div>
+    </div>
+
+    <!-- PRINT -->
+    <div class="panel" data-panel="print" hidden>
+      <div class="box">
+        <h3>পেজ সেটআপ</h3>
+        <div class="grid2">
+          <label class="fld"><span>কাগজ</span>
+            <select data-bind="print.paper">
+              <option value="A4">A4 (210 × 297 মিমি)</option>
+              <option value="Letter">Letter</option>
+              <option value="Legal">Legal</option>
+            </select>
+          </label>
+          <label class="fld"><span>এক পেজে কয়টি কার্ড</span><input type="number" min="1" max="60" step="1" data-bind="print.perPage"></label>
+          <label class="fld"><span>কার্ডের মাঝে ফাঁকা (মিমি)</span><input type="number" min="0" max="30" step="0.5" data-bind="print.gap"></label>
+          <label class="fld"><span>পেজের মার্জিন (মিমি)</span><input type="number" min="0" max="40" step="0.5" data-bind="print.margin"></label>
+        </div>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" data-bind="print.cutMarks"> কাটার দাগ</label>
+          <label class="chk"><input type="checkbox" data-bind="print.vcenter"> পেজের মাঝখানে বসান</label>
+        </div>
+        <p class="cap-info" id="capInfo"></p>
+      </div>
+
+      <div class="box">
+        <h3>কাদের কার্ড প্রিন্ট হবে</h3>
+        <div class="chips">
+          <label class="chip"><input type="radio" name="which" value="all" data-bind="print.which"><span>সবার</span></label>
+          <label class="chip"><input type="radio" name="which" value="selected" data-bind="print.which"><span>টিক দেওয়াদের</span></label>
+          <label class="chip"><input type="radio" name="which" value="current" data-bind="print.which"><span>শুধু এখনকার জন</span></label>
+        </div>
+        <p class="hint" id="printCount"></p>
+        <button type="button" class="btn primary big" id="printBtn">প্রিন্ট করুন</button>
+        <div class="tip">
+          <b>প্রিন্ট ডায়ালগে যা দেখে নেবেন</b>
+          <span>Margins: None · Scale: 100% (Default) · Background graphics: চালু। PDF বানাতে Destination থেকে “Save as PDF” বেছে নিন।</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PREVIEW ============ -->
+  <aside class="preview" id="previewPanel" aria-label="লাইভ প্রিভিউ">
+    <div class="preview-head">
+      <div class="seg small">
+        <button type="button" data-pmode="card" class="active">কার্ড</button>
+        <button type="button" data-pmode="sheet">পুরো পেজ</button>
+      </div>
+      <label class="zoom" id="zoomWrap"><span>জুম</span><input type="range" id="zoom" min="0.6" max="3.5" step="0.05"></label>
+      <button type="button" class="icon-btn close-preview" id="closePreview" aria-label="প্রিভিউ বন্ধ">✕</button>
+    </div>
+    <div class="preview-body" id="previewBody">
+      <div id="cardStage" class="card-stage"></div>
+      <div id="sheetStage" class="sheet-stage" hidden></div>
+    </div>
+    <div class="preview-foot">
+      <button type="button" class="btn sm" data-nav="-1">◀</button>
+      <span id="navInfo" class="nav-info"></span>
+      <button type="button" class="btn sm" data-nav="1">▶</button>
+    </div>
+  </aside>
+</main>
+
+<button type="button" id="openPreview" class="fab">প্রিভিউ দেখুন</button>
+
+<dialog id="jsonDlg" class="dlg">
+  <div class="dlg-inner">
+    <h3>JSON থেকে শিক্ষার্থী যোগ</h3>
+    <p class="hint">Key হিসেবে <code>name, father, mother, class, group, roll, session, id</code> ব্যবহার করুন। বাংলা key (যেমন “নাম”, “রোল”) দিলেও চলবে। ছবি পরে আলাদা করে দিন।</p>
+    <textarea id="jsonText" spellcheck="false" rows="12" placeholder='[ { "name": "...", "father": "...", "roll": "1" } ]'></textarea>
+    <p id="jsonErr" class="err" role="alert"></p>
+    <div class="dlg-foot">
+      <button type="button" class="btn ghost sm" id="jsonSample">নমুনা বসান</button>
+      <div class="jmode">
+        <label class="chk small"><input type="radio" name="jmode" value="append" checked> আগের তালিকার সাথে যোগ</label>
+        <label class="chk small"><input type="radio" name="jmode" value="replace"> আগের তালিকা বাদ দিয়ে</label>
+      </div>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="jsonCancel">বাতিল</button>
+      <button type="button" class="btn primary" id="jsonImport">যোগ করুন</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="printArea" aria-hidden="true"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
